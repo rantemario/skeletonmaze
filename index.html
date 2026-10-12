@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>スケルトン迷宮記 〜骨から始まるダンジョン制覇〜</title>
+  <!-- Google Fonts: レトロピクセルフォント & 洗練されたファンタジーフォント -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=DotGothic16&family=Press+Start+2P&family=Outfit:wght@400;600;700&display=swap"
+    rel="stylesheet">
+  <script type="module" crossorigin src="./assets/index-Bft89v2E.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-YS7ZUvM2.css">
+</head>
+
+<body>
+  <div id="app">
+    <div class="game-wrapper" id="game-wrapper">
+      <!-- トップヘッダー: タイトルとクイック操作 -->
+      <header class="game-header">
+        <div class="brand">
+          <span class="game-emblem">💀</span>
+          <h1 class="game-title">スケルトン迷宮記 <span class="sub-title">CHRONICLE</span></h1>
+        </div>
+        <div class="header-controls">
+          <button id="btn-toggle-sound" class="btn-icon" title="サウンド切り替え (BGM/SE)">🔊 SOUND ON</button>
+          <button id="btn-toggle-crt" class="btn-icon active" title="レトロCRTフィルター切替">📺 CRT: ON</button>
+          <button id="btn-help" class="btn-icon" title="操作手引">📜 GUIDE</button>
+          <button id="btn-full-reset" class="btn-icon btn-reset" title="ゲームデータを完全初期化">🔄 RESET</button>
+        </div>
+      </header>
+
+      <!-- メインゲームエリア（画面とサイドパネル） -->
+      <main class="main-layout">
+        <!-- ゲーム画面カラム（上部ステータスバー ＋ キャンバス ＋ フッタードック） -->
+        <div class="game-view-column">
+          <!-- 画面上部の大型ステータスHUD（常時見やすいHP/Lv/ATK/鍵/王冠） -->
+          <div class="top-status-bar" id="top-status-bar">
+            <!-- レベル表示 ＆ 経験値バー（HPより左に配置） -->
+            <div class="top-lv-card" title="勇者のレベルと経験値（EXP）">
+              <div class="top-lv-header">
+                <span class="top-lv-star">⭐</span>
+                <span class="top-lv-label">Lv.</span>
+                <span class="top-lv-num" id="top-lv-value">1</span>
+              </div>
+              <div class="top-exp-track" title="EXP進行度">
+                <div class="top-exp-fill" id="top-exp-bar-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- HPゲージ -->
+            <div class="top-gauge-card hp-gauge">
+              <div class="top-gauge-header">
+                <div class="top-gauge-title">
+                  <span class="gauge-icon">❤️</span>
+                  <span class="gauge-name">HP</span>
+                </div>
+                <span class="top-gauge-val" id="top-hp-value">20 / 20</span>
+              </div>
+              <div class="top-gauge-track">
+                <div class="top-gauge-fill hp-fill" id="top-hp-bar-fill" style="width: 100%;"></div>
+              </div>
+              <!-- HP経験値バー（スタミナストーン蓄積による最大HP成長進行度） -->
+              <div class="top-hp-exp-track" title="次の最大HP UP(+5)までのスタミナストーン蓄積進行度">
+                <div class="top-hp-exp-fill" id="top-hp-exp-bar-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- クイックバッジ群（攻撃・鍵・王冠3連画像） -->
+            <div class="top-badges-container">
+              <div class="top-badge atk-badge" title="実効攻撃力（パワーストーン複数取得で上昇）">
+                <div class="atk-badge-header">
+                  <span class="top-badge-label">⚔️ 攻撃</span>
+                  <span class="top-badge-num" id="top-atk-value">5</span>
+                </div>
+                <div class="top-atk-exp-track" title="次の攻撃力UPまでのストーン蓄積進行度">
+                  <div class="top-atk-exp-fill" id="top-atk-exp-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+              <div class="top-badge def-badge" title="防御力（Lv5の倍数ごとに+1。防御1につき被ダメージ1減少）">
+                <span class="top-badge-label">🛡️ 防御</span>
+                <span class="top-badge-num" id="top-def-value">0</span>
+              </div>
+              <div class="top-badge shield-badge" id="top-shield-badge" title="無敵シールド（十字架で2〜5回付与。敵の被ダメを完全ブロック）">
+                <span class="top-badge-label">✨ 神盾</span>
+                <span class="top-badge-num" id="top-shield-value">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ゲームキャンバスコンテナ（キャンバスと各種モーダル・コントローラー） -->
+          <div class="canvas-viewport" id="canvas-viewport">
+            <canvas id="game-canvas" width="640" height="480"></canvas>
+
+            <!-- バーチャルコントローラー（タッチ/マウス操作対応） -->
+            <div class="virtual-controls" id="virtual-controls">
+              <div class="dpad">
+                <button id="btn-pad-up" class="pad-btn pad-up" data-dir="UP">▲</button>
+                <div class="dpad-middle">
+                  <button id="btn-pad-left" class="pad-btn pad-left" data-dir="LEFT">◀</button>
+                  <div class="pad-center"></div>
+                  <button id="btn-pad-right" class="pad-btn pad-right" data-dir="RIGHT">▶</button>
+                </div>
+                <button id="btn-pad-down" class="pad-btn pad-down" data-dir="DOWN">▼</button>
+              </div>
+
+              <div class="action-buttons">
+                <button id="btn-action-wait" class="action-btn wait-btn" title="その場で待機 (X / ピリオド)">⏳ 待機</button>
+                <button id="btn-action-attack" class="action-btn attack-btn" title="近接攻撃 (Space/J)">⚔️ 攻撃</button>
+              </div>
+            </div>
+
+            <!-- タイトル画面オーバレイ -->
+            <div class="overlay-screen active" id="overlay-title">
+              <div class="title-card">
+                <div class="title-logo-box">
+                  <div class="logo-dragon">💀⚔️</div>
+                  <h2 class="title-main">スケルトン迷宮記</h2>
+                  <p class="title-sub">骨から始まるダンジョン制覇！巨獣を喰らい最強を目指せ！</p>
+                </div>
+
+                <div class="prologue-box">
+                  <div class="rules-summary">
+                    <p class="rule-title">【基本ルール】</p>
+                    <ul class="rule-list">
+                      <li>⚔️ <strong>ターン制:</strong> 自分が1歩動くと敵も1歩動く</li>
+                      <li>👑 <strong>目標:</strong> 3つのクラウンを集めてフロアボスを撃破</li>
+                      <li>⚠️ <strong>警戒:</strong> 倒せない巨大FOEや冒険者の襲来に注意</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <button id="btn-start-game" class="btn-primary glow-btn">最強の魔物へ覚醒する (START)</button>
+              </div>
+            </div>
+
+            <!-- フロア制覇（勝利）オーバレイ -->
+            <div class="overlay-screen" id="overlay-cleared">
+              <div class="result-card victory-card">
+                <div class="victory-badge">👑 VICTORY!</div>
+                <h2 class="result-title">BOSS討伐 達成！</h2>
+                <p class="result-desc">
+                  3つのクラウンの聖なる輝きがフロアの結界を解き放ち、<br>
+                  階層を守護する強大なフロアボスを見事に打ち滅ぼした！
+                </p>
+                <div class="result-stats" id="victory-stats"></div>
+                <button id="btn-next-floor" class="btn-primary glow-btn">深層の次の階層へ進む (NEXT FLOOR)</button>
+              </div>
+            </div>
+
+            <!-- ゲームオーバーオーバレイ -->
+            <div class="overlay-screen" id="overlay-gameover">
+              <div class="result-card defeat-card">
+                <div class="defeat-badge">💀 YOU DIED</div>
+                <h2 class="result-title">迷宮の露と消ゆ</h2>
+                <p class="result-desc">
+                  我が家への帰還は阻まれ、魂は迷宮の闇に呑まれた……
+                </p>
+                <button id="btn-retry-game" class="btn-primary glow-btn">もう一度挑戦する (RETRY)</button>
+              </div>
+            </div>
+
+            <!-- 黄泉還り復活モーダル -->
+            <div class="overlay-screen modal-screen" id="modal-revive">
+              <div class="modal-card revive-card">
+                <div class="modal-header">
+                  <h3>💀 黄泉還りの儀（10ターン前からやり直し）</h3>
+                </div>
+                <div class="modal-body revive-body">
+                  <div class="revive-info-box">
+                    <p class="revive-desc">
+                      力尽きてしまった……だが黄泉還りの秘術により、過去の刻へと巻き戻すことができる！<br>
+                      <strong>【復活条件】</strong> 各ステージ<strong>1回は無料</strong>で復活可能！2回目以降は稀に入手できる<strong>【黄泉還りの秘薬】</strong>を消費します。<br>
+                      ※「最初からやり直す」を選択した場合、<strong>この階層に来た時と同じ状況で再開</strong>します。
+                    </p>
+                    <div class="revive-stats-grid">
+                      <div class="revive-stat-item">
+                        <span class="revive-stat-label">無料コンティニュー枠:</span>
+                        <span class="revive-stat-val text-cyan" id="revive-free-status">利用可能 (1回無料)</span>
+                      </div>
+                      <div class="revive-stat-item">
+                        <span class="revive-stat-label">黄泉還りの秘薬所持数:</span>
+                        <span class="revive-stat-val text-gold" id="revive-potion-count">0 個</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="revive-actions">
+                  <button id="btn-confirm-revive" class="btn-primary glow-btn btn-revive">⏳ 10ターン前から復活する (HP100%)</button>
+                  <button id="btn-decline-revive" class="btn-secondary btn-restart">🔄 このステージを最初からやり直す（突入時復元）</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 操作手引き・図鑑モーダル -->
+            <div class="overlay-screen modal-screen" id="modal-help">
+              <div class="modal-card">
+                <div class="modal-header">
+                  <h3>📜 冒険の手引き & 完全図鑑マニュアル</h3>
+                  <button id="btn-close-help" class="btn-close" title="閉じる">✕</button>
+                </div>
+                <div class="modal-body">
+                  <!-- 基本操作 -->
+                  <div class="help-section">
+                    <h4>🎮 基本操作（完全ターン制）</h4>
+                    <ul>
+                      <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> または <kbd>キーボード矢印</kbd>: 1歩移動（1ターン進行）</li>
+                      <li><strong>画面左下の矢印ボタン:</strong> <strong>向き変更専用（ターン消費なし！）</strong> 魔法や攻撃の方向を安全に狙えます。</li>
+                      <li><kbd>Space</kbd> または <kbd>J</kbd> / <kbd>⚔️ボタン</kbd>: 目の前の敵へ近接攻撃</li>
+                      <li><kbd>X</kbd> または <kbd>.</kbd> / <kbd>⌛待機ボタン</kbd>: <strong>その場で足踏み待機</strong>（敵を引き寄せて先手を取る）</li>
+                      <li><kbd>1</kbd>〜<kbd>6</kbd> または スロットクリック: <strong>秘術魔法の即時詠唱</strong>（ストック消費）</li>
+                    </ul>
+                    <p style="margin-top: 6px; font-size: 11px; color: #a5b4fc;">
+                      ※地下1階（B1F）から最深部地下10階（B10F）までの全10ステージ制！B10Fの守護巨獣討伐で迷宮完全制覇となります。
+                    </p>
+                  </div>
+
+                  <!-- アイテム図鑑 -->
+                  <div class="help-section">
+                    <h4>💎 迷宮のアイテム図鑑</h4>
+                    <div class="guide-grid">
+                      <!-- パワーストーン -->
+                      <div class="guide-item highlight-stone">
+                        <div class="guide-icon-badge" style="color: #d2b4de; text-shadow: 0 0 10px #9b59b6;">💎</div>
+                        <div class="guide-content">
+                          <div class="guide-title">
+                            <span>パワーストーン（力の石）</span>
+                            <span class="guide-tag tag-power">即時強化</span>
+                          </div>
+                          <div class="guide-desc">
+                            <strong>【紫色のひし形結晶】</strong><br>
+                            拾った瞬間に攻撃力経験値を獲得！一定数拾うごとに<strong>基本攻撃力が段階的に恒久上昇</strong>します。
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- スタミナストーン -->
+                      <div class="guide-item highlight-stone">
+                        <div class="guide-icon-badge" style="color: #2ecc71; text-shadow: 0 0 10px #2ecc71;">💚</div>
+                        <div class="guide-content">
+                          <div class="guide-title">
+                            <span>スタミナストーン（生命の石）</span>
+                            <span class="guide-tag tag-heal">最大HP強化</span>
+                          </div>
+                          <div class="guide-desc">
+                            <strong>【緑色の生命結晶】</strong><br>
+                            拾った瞬間に<strong>最大HPと現在HPが即座に上昇</strong>！耐久力を底上げして深層へ備えましょう。
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- クラウン -->
+                      <div class="guide-item">
+                        <div class="guide-icon-badge" style="color: #ffd700; text-shadow: 0 0 10px #ffd700;">👑</div>
+                        <div class="guide-content">
+                          <div class="guide-title">
+                            <span>クラウン（王冠）</span>
+                            <span class="guide-tag tag-vital">結界解除キー</span>
+                          </div>
+                          <div class="guide-desc">
+                            フロア内に<strong>必ず3つ</strong>存在。拾うと<strong>ボスの無敵物理結界を完全解除</strong>！3つ集めるまでボスへの攻撃は一切効きません。
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- 宝箱（3種） -->
+                      <div class="guide-item">
+                        <div class="guide-icon-badge">📦</div>
+                        <div class="guide-content">
+                          <div class="guide-title">
+                            <span>宝箱（銅・銀・金）</span>
+                            <span class="guide-tag tag-key">接触で即時開封</span>
+                          </div>
+                          <div class="guide-desc">
+                            鍵は不要！踏み込むだけで即座に開錠して大量ゴールドやスクロールを獲得！<br>
+                            ・<strong>銅の宝箱:</strong> 100 G<br>
+                            ・<strong>銀の宝箱:</strong> 200 G<br>
+                            ・<strong>金の宝箱:</strong> 500 G<br>
+                            獲得したゴールドはずっと蓄積され、主神の祭壇で使用できます。
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- たいまつ -->
+                      <div class="guide-item">
+                        <div class="guide-icon-badge" style="color: #f39c12;">🔥</div>
+                        <div class="guide-content">
+                          <div class="guide-title">
+                            <span>たいまつ（Torch）</span>
+                            <span class="guide-tag tag-buff">200ターン視界拡大</span>
+                          </div>
+                          <div class="guide-desc">
+                            拾うと<strong>200ターンの間、視界が1.5倍に広がる</strong>！残存ターン数は画面左上のアイコン下に常時表示されます。
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- 武器・防具 -->
+                      <div class="guide-item">
+                        <div class="guide-icon-badge" style="color: #ff4757;">⚔️</div>
+                        <div class="guide-content">
+                          <div class="guide-title">
+                            <span>武器 & 防具（装備品）</span>
+                            <span class="guide-tag tag-power">各最大3個所持</span>
+                          </div>
+                          <div class="guide-desc">
+                            武器（攻撃力+3〜+30）、防具（防御力+2〜+20）。攻撃や被弾で耐久度が減少。枠をクリックして吹き出しから「🗑️ 捨てる」ことも可能です。
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- スクロール（巻物） -->
+                      <div class="guide-item">
+                        <div class="guide-icon-badge" style="color: #67e8f9;">📜</div>
+                        <div class="guide-content">
+                          <div class="guide-title">
+                            <span>秘術の巻物（スクロール）</span>
+                            <span class="guide-tag tag-buff">専用携帯枠</span>
+                          </div>
+                          <div class="guide-desc">
+                            荷物とは別に<strong>最大3本まで携帯可能</strong>な使い捨て奇跡。<br>
+                            ・<strong>剛力:</strong> 15ターン攻撃力2倍<br>
+                            ・<strong>大治癒:</strong> HP全回復＋状態浄化<br>
+                            ・<strong>神鳴爆震:</strong> 周囲5マスの全魔物に大爆発<br>
+                            ・<strong>絶対零度:</strong> 画面内の全魔物を5ターン完全凍結<br>
+                            ・<strong>千里眼:</strong> 現在フロアの全マップ＆敵を透視
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- 生命の霊薬 -->
+                      <div class="guide-item">
+                        <div class="guide-icon-badge" style="color: #2ecc71;">🧪</div>
+                        <div class="guide-content">
+                          <div class="guide-title">
+                            <span>生命の霊薬</span>
+                            <span class="guide-tag tag-heal">最大HPの50%回復</span>
+                          </div>
+                          <div class="guide-desc">
+                            拾った瞬間に<strong>最大HPの50%が即座に回復</strong>します。ピンチの命綱。
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- 十字架 -->
+                      <div class="guide-item">
+                        <div class="guide-icon-badge" style="color: #fff; text-shadow: 0 0 10px #fff;">✝️</div>
+                        <div class="guide-content">
+                          <div class="guide-title">
+                            <span>聖なる十字架</span>
+                            <span class="guide-tag tag-buff">無敵シールド</span>
+                          </div>
+                          <div class="guide-desc">
+                            拾った瞬間に聖なる加護が宿り、<strong>被ダメージを完全無効化するシールド（2〜5回分）</strong>を獲得します。
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 設備・ギミック -->
+                  <div class="help-section">
+                    <h4>🏛️ 拠点・迷宮のギミック</h4>
+                    <div class="guide-grid">
+                      <div class="guide-item highlight-home">
+                        <div class="guide-icon-badge" style="color: #00ffcc; text-shadow: 0 0 12px #00ffcc;">🏛️</div>
+                        <div class="guide-content">
+                          <div class="guide-title">聖なる碑石（HOME / 我が家）</div>
+                          <div class="guide-desc">
+                            勇者の命脈を繋ぐ古代の聖なる石碑。魔物は侵入不能。<br>
+                            ・<strong>ターンチャージ回復:</strong> 碑石は毎ターン力を蓄え、重なった瞬間に<strong>【蓄積ターン×10%】HPを回復</strong>！10ターン経過していれば一撃で100%全快！<br>
+                            ・<strong>待機リジェネ:</strong> 碑石の上で待機（<kbd>X</kbd>キー）すると毎ターン10%回復。<br>
+                            ・<strong>最大チャージ演出:</strong> 10ターン満ちた碑石は<strong>黄金と青の聖なる光柱（⚡100% MAX⚡）</strong>を放ちます。<br>
+                            ・<strong>主神の祭壇:</strong> 我が家にいる時のみ、蓄積したゴールドで主神の加護を購入・強化できます！
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="guide-item">
+                        <div class="guide-icon-badge" style="color: #d4984d;">🧱</div>
+                        <div class="guide-content">
+                          <div class="guide-title">岩ブロック（BLOCK）</div>
+                          <div class="guide-desc">
+                            【剛力の腕輪】取得後に体当たりして奥の床へ押して動かせます。通路を開けたり、敵を閉じ込める防護壁として活用できます。
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button id="btn-confirm-help" class="btn-primary glow-btn btn-modal-close-action">✕ ガイドを閉じる（ゲームへ戻る）</button>
+              </div>
+            </div>
+
+            <!-- 主神の祭壇（加護ショップ）モーダル -->
+            <div class="overlay-screen modal-screen" id="modal-altar">
+              <div class="modal-card altar-card">
+                <div class="modal-header">
+                  <h3>🏛️ 主神の祭壇（恒久の加護）</h3>
+                  <button id="btn-close-altar" class="btn-close" title="閉じる">✕</button>
+                </div>
+                <div class="modal-body altar-body">
+                  <div class="altar-header-notice">
+                    <span class="altar-emblem">✨</span>
+                    <div class="altar-info">
+                      <p class="altar-desc">
+                        我が家（HOMEの碑石）に満ちる聖なる力により、主神との交信が可能です。<br>
+                        迷宮で集めた<strong>ゴールド（金貨）</strong>を捧げることで、<strong>ゲームオーバー後も永続する神の加護</strong>を授かります。
+                      </p>
+                      <div class="altar-wallet">
+                        <span class="wallet-label">💰 蓄積ゴールド:</span>
+                        <span class="wallet-amount" id="altar-gold-amount">0 G</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 加護一覧リスト（JSで動的生成） -->
+                  <div class="altar-section-title">
+                    <span class="section-badge">BLESSINGS</span>
+                    <h4>✨ 主神の恒久加護</h4>
+                  </div>
+                  <div class="blessings-list" id="blessings-list">
+                    <!-- JSで加護カードが生成される -->
+                  </div>
+
+                  <!-- 魔法スクロール購入（ユーザー要求：魔法も購入できるように） -->
+                  <div class="altar-section-title" style="margin-top: 20px;">
+                    <span class="section-badge" style="background: rgba(155, 89, 182, 0.25); color: #c39bd3; border-color: rgba(155, 89, 182, 0.4);">SPELL MARKET</span>
+                    <h4>🔮 神託の魔法ストック購入</h4>
+                  </div>
+                  <p style="font-size: 11px; color: #a5b4fc; margin-bottom: 8px;">
+                    迷宮のゴールドを捧げ、古代魔法の詠唱可能回数を直接購入・補給します。
+                  </p>
+                  <div class="spell-market-list" id="spell-market-list">
+                    <!-- JSで魔法購入カードが生成される -->
+                  </div>
+                </div>
+                <button id="btn-confirm-altar" class="btn-primary glow-btn btn-modal-close-action">✕ 祭壇を閉じる（探索へ戻る）</button>
+              </div>
+            </div>
+
+            <!-- 完全リセット確認モーダル（ユーザー要求：完全リセット確認ウィンドウ） -->
+            <div class="overlay-screen modal-screen" id="modal-reset-confirm">
+              <div class="modal-card reset-card">
+                <div class="modal-header">
+                  <h3>⚠️ 完全リセットの確認</h3>
+                  <button id="btn-close-reset-confirm" class="btn-close" title="閉じる">✕</button>
+                </div>
+                <div class="modal-body reset-body">
+                  <div class="reset-warning-box">
+                    <p class="reset-desc">
+                      【警告】神の祭壇で獲得したすべての加護、蓄積ゴールド、ステージ進捗、討伐レコードなど、<strong>すべてのセーブデータを完全に消去</strong>します。<br><br>
+                      この操作は取り消せません。本当に全て初期化して再起動しますか？
+                    </p>
+                  </div>
+                </div>
+                <div class="modal-actions">
+                  <button id="btn-confirm-full-reset" class="btn-danger glow-btn">💥 すべてリセットして再起動</button>
+                  <button id="btn-cancel-full-reset" class="btn-secondary">✕ キャンセル（ゲームへ戻る）</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 拡大戦術レーダーマップモーダル（ミニマップタップで拡大） -->
+            <div class="overlay-screen modal-screen" id="modal-expanded-radar">
+              <div class="modal-card expanded-radar-card">
+                <div class="modal-header">
+                  <h3>🛰️ 戦術マップ拡大ビュー（RADAR ZOOM）</h3>
+                  <button id="btn-close-expanded-radar" class="btn-close" title="閉じる">✕</button>
+                </div>
+                <div class="modal-body expanded-radar-body">
+                  <div class="expanded-radar-stats">
+                    <span class="expanded-stat-item">階層: <b class="text-gold" id="expanded-floor-text">B1F</b></span>
+                    <span class="expanded-stat-item">踏破率: <b class="text-cyan" id="expanded-coverage-text">0%</b></span>
+                    <span class="expanded-stat-item">注目地点: <b class="text-green" id="expanded-coords-text">--</b></span>
+                  </div>
+
+                  <!-- 拡大マップ色マスの説明（凡例レジェンド） -->
+                  <div class="expanded-radar-legend-grid">
+                    <span class="legend-badge"><span class="dot-color dot-wall">■</span>壁/岩/墓(進入不可)</span>
+                    <span class="legend-badge"><span class="dot-color dot-home">■</span>碑石/泉(回復)</span>
+                    <span class="legend-badge"><span class="dot-color dot-crown">👑</span>王冠(↓矢印)</span>
+                    <span class="legend-badge"><span class="dot-color dot-portal">■</span>魔法陣</span>
+                    <span class="legend-badge"><span class="dot-color dot-potion">●</span>霊薬</span>
+                    <span class="legend-badge"><span class="dot-color dot-warp">■</span>ワープマス</span>
+                    <span class="legend-badge"><span class="dot-color dot-foe">■</span>FOE(災厄巨獣)</span>
+                    <span class="legend-badge"><span class="dot-color dot-dragon">■</span>迷宮ボス</span>
+                  </div>
+
+                  <div class="expanded-radar-canvas-container">
+                    <canvas id="expanded-radar-canvas" width="380" height="380"></canvas>
+                  </div>
+                  <div class="expanded-radar-tips">
+                    <span>※ マップ内タップで照準移動。踏破済みの王冠は<strong>【↓矢印】</strong>で誘導されます。</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div> <!-- End of canvas-viewport -->
+
+          <!-- 画面下部フッターコントロールエリア（神託の秘術魔法バー） -->
+          <footer class="bottom-footer-docks" id="bottom-footer-docks">
+            <!-- 習得魔法バー（レベルアップで解放、[1]〜[6]キーまたはクリックで詠唱） -->
+            <!-- 習得魔法バー（コンパクト化：アイコン＋所持数のみ） -->
+            <div class="footer-dock spells-dock-compact" id="spells-dock">
+              <div class="dock-compact-header">
+                <span class="dock-compact-title">✨ 魔法</span>
+              </div>
+              <div class="spell-slots-compact-grid" id="spell-slots-container">
+                <!-- JSで6スロット動的生成：アイコン＋所持数のみ -->
+              </div>
+            </div>
+
+            <!-- 装備ドック（武器3枠 ＆ 防具3枠） -->
+            <div class="footer-dock equipment-dock" id="equipment-dock">
+              <!-- 武器グループ（一番左: 装備枠、右2個: スタック） -->
+              <div class="equip-group weapon-group">
+                <div class="dock-compact-header">
+                  <span class="dock-compact-title">⚔️ 武器 <span class="dock-hint">(左:装備/右:持物)</span></span>
+                </div>
+                <div class="equipment-slots-grid" id="weapon-slots-container">
+                  <!-- JSで3スロット生成 -->
+                </div>
+              </div>
+
+              <!-- 防具グループ（一番左: 装備枠、右2個: スタック） -->
+              <div class="equip-group armor-group">
+                <div class="dock-compact-header">
+                  <span class="dock-compact-title">🛡️ 防具 <span class="dock-hint">(左:装備/右:持物)</span></span>
+                </div>
+                <div class="equipment-slots-grid" id="armor-slots-container">
+                  <!-- JSで3スロット生成 -->
+                </div>
+              </div>
+            </div>
+          </footer>
+        </div> <!-- End of game-view-column -->
+
+        <!-- サイドパネル: ミニマップ & 主神の祭壇アクセス & レコード & ログ（上部HUD重複項目は全排除） -->
+        <aside class="sidebar-hud">
+          <!-- ミニマップレーダー（タップで拡大） -->
+          <div class="hud-card radar-card">
+            <div class="radar-card-header">
+              <div class="radar-title-row">
+                <span class="radar-title-text">🛰️ RADAR MINIMAP</span>
+                <span class="radar-coverage-badge" title="移動可能マスの踏破率">踏破 <span id="radar-coverage-value">0</span>%</span>
+                <span class="radar-floor-badge" id="top-floor-value">B1F</span>
+              </div>
+              <div class="radar-legend-row">
+                <span class="legend-item"><span class="dot-home">■</span>碑石</span>
+                <span class="legend-item"><span class="dot-dragon">■</span>竜</span>
+                <span class="legend-item"><span class="dot-crown">■</span>王冠</span>
+                <span class="legend-item"><span class="dot-portal">■</span>魔法陣</span>
+                <span class="legend-item"><span class="dot-potion">■</span>霊薬</span>
+              </div>
+            </div>
+            <div class="radar-box" id="radar-box" title="タップでここを拡大表示">
+              <canvas id="minimap-canvas" width="180" height="180"></canvas>
+              <div class="radar-zoom-badge">🔍 タップで拡大</div>
+            </div>
+          </div>
+
+          <!-- 主神の祭壇アクセスカード -->
+          <div class="hud-card altar-access-card" id="altar-access-card">
+            <div class="card-title">🏛️ 主神の祭壇（加護）</div>
+            <div class="altar-access-content">
+              <div class="altar-action-bar">
+                <button id="btn-open-altar" class="btn-altar-action">
+                  ✨ 主神の祭壇を開く
+                </button>
+                <div class="altar-gold-display" title="蓄積ゴールド（永続）">
+                  <span class="altar-gold-icon">💰</span>
+                  <span class="altar-gold-text" id="sidebar-gold-value">0 G</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 冒険の記録（スコアと撃破数） -->
+          <div class="hud-card record-card">
+            <div class="card-title">🏆 RECORD</div>
+            <div class="record-grid">
+              <div class="record-item">
+                <span class="record-label">スコア</span>
+                <span class="record-value gold-text" id="stat-score">0</span>
+              </div>
+              <div class="record-item">
+                <span class="record-label">撃破数</span>
+                <span class="record-value" id="stat-kills">0 匹</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ダンジョン探索コンソール（ログ） -->
+          <div class="hud-card log-card">
+            <div class="card-title">📜 CHRONICLE LOG</div>
+            <div class="log-container" id="message-log-container">
+              <div class="log-item system-log">ゲーム準備完了。</div>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+
+  <!-- トースト通知コンテナ（画面中央上部にエレガントに表示） -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- 魔法詳細吹き出しポップオーバー（初回タップで表示、外側タップで非表示、再タップで発動） -->
+  <div id="spell-popover" class="spell-popover hidden">
+    <div class="popover-arrow"></div>
+    <div class="popover-content" id="spell-popover-content"></div>
+  </div>
+
+</body>
+
+</html>

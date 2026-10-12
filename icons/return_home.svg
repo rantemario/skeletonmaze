@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="homeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#00ffcc" />
+      <stop offset="70%" stop-color="#0984e3" />
+      <stop offset="100%" stop-color="#001833" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="10" fill="#06121c" stroke="#00ffcc" stroke-width="2" />
+  <circle cx="32" cy="34" r="26" fill="url(#homeGlow)" opacity="0.4" />
+  <!-- 神殿・聖なる碑石の柱 -->
+  <polygon points="32,10 14,22 50,22" fill="#00ffcc" />
+  <rect x="18" y="22" width="28" height="4" fill="#ffffff" />
+  <!-- 柱 -->
+  <rect x="20" y="26" width="5" height="20" fill="#74b9ff" />
+  <rect x="29.5" y="26" width="5" height="20" fill="#74b9ff" />
+  <rect x="39" y="26" width="5" height="20" fill="#74b9ff" />
+  <!-- 土台基部 -->
+  <rect x="14" y="46" width="36" height="5" fill="#00ffcc" />
+  <rect x="11" y="51" width="42" height="4" fill="#0984e3" />
+  <!-- 帰還の螺旋光柱 -->
+  <circle cx="32" cy="36" r="3" fill="#ffffff" />
+</svg>
