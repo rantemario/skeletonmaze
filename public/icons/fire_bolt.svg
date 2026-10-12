@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="fireGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff7b2" />
+      <stop offset="35%" stop-color="#ff9f1a" />
+      <stop offset="70%" stop-color="#ff3838" />
+      <stop offset="100%" stop-color="#7a0000" stop-opacity="0" />
+    </radialGradient>
+    <filter id="flameBlur">
+      <feGaussianBlur stdDeviation="1.5" />
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="10" fill="#140707" stroke="#e74c3c" stroke-width="2" />
+  <circle cx="32" cy="34" r="24" fill="url(#fireGlow)" opacity="0.6" />
+  <!-- 外炎 -->
+  <path d="M32 8 C36 18, 48 24, 48 38 C48 48, 40 56, 32 56 C24 56, 16 48, 16 38 C16 26, 26 16, 32 8 Z" fill="#e74c3c" />
+  <!-- 中炎 -->
+  <path d="M32 18 C35 24, 42 28, 42 38 C42 45, 37 51, 32 51 C27 51, 22 45, 22 38 C22 30, 28 24, 32 18 Z" fill="#f39c12" />
+  <!-- 芯の白熱球 -->
+  <path d="M32 28 C34 32, 38 35, 38 41 C38 45, 35 48, 32 48 C29 48, 26 45, 26 41 C26 36, 30 32, 32 28 Z" fill="#fffbe0" />
+  <circle cx="32" cy="40" r="4" fill="#ffffff" />
+</svg>
